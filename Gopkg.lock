@@ -2,6 +2,15 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/Azure/go-ansiterm"
+  packages = [
+    ".",
+    "winterm"
+  ]
+  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+
+[[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
   revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
@@ -14,7 +23,7 @@
   version = "v1.0.4"
 
 [[projects]]
-  branch = "master"
+  branch = "imagepull-progress"
   name = "github.com/cncd/pipeline"
   packages = [
     "pipeline",
@@ -28,7 +37,8 @@
     "pipeline/interrupt",
     "pipeline/multipart"
   ]
-  revision = "3a09486affc9215ba52f55b1f6e10182458d1aba"
+  revision = "77e7ae7c65c14af595d60e71034e1cc10ea28a81"
+  source = "https://github.com/laszlocph/pipeline"
 
 [[projects]]
   name = "github.com/docker/distribution"
@@ -54,10 +64,14 @@
     "api/types/volume",
     "client",
     "pkg/ioutils",
+    "pkg/jsonlog",
+    "pkg/jsonmessage",
     "pkg/longpath",
     "pkg/random",
     "pkg/stdcopy",
     "pkg/stringid",
+    "pkg/term",
+    "pkg/term/windows",
     "pkg/tlsconfig",
     "reference"
   ]
@@ -245,6 +259,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3c2492a2f392e0e4d42f2247aca5631e020aed1e2dea238bb56e27739866927a"
+  inputs-digest = "4f52df5c06de43a79c0e7cc6295ce0f6d7dedd17354774dd1acfcfe8160810a5"
   solver-name = "gps-cdcl"
   solver-version = 1
