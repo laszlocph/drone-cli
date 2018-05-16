@@ -3,7 +3,8 @@
 
 [[constraint]]
   name = "github.com/cncd/pipeline"
-  branch = "master"
+  branch = "imagepull-progress"
+  source = "https://github.com/laszlocph/pipeline"
 
 [[constraint]]
   name = "github.com/drone/drone-go"
