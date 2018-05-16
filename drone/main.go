@@ -22,7 +22,7 @@ import (
 )
 
 // drone version number
-var version string
+var version string = "v0.8.5-laszlo"
 
 func main() {
 	app := cli.NewApp()
