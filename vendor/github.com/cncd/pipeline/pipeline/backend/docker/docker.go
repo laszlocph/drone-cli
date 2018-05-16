@@ -3,7 +3,7 @@ package docker
 import (
 	"context"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"github.com/cncd/pipeline/pipeline/backend"
 
@@ -11,7 +11,9 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/pkg/term"
 )
 
 type engine struct {
@@ -35,7 +37,7 @@ func NewEnv() (backend.Engine, error) {
 	return New(cli), nil
 }
 
-func (e *engine) Setup(conf *backend.Config) error {
+func (e *engine) Setup(_ context.Context, conf *backend.Config) error {
 	for _, vol := range conf.Volumes {
 		_, err := e.client.VolumeCreate(noContext, volume.VolumesCreateBody{
 			Name:       vol.Name,
@@ -60,9 +62,7 @@ func (e *engine) Setup(conf *backend.Config) error {
 	return nil
 }
 
-func (e *engine) Exec(proc *backend.Step) error {
-	ctx := context.Background()
-
+func (e *engine) Exec(ctx context.Context, proc *backend.Step) error {
 	config := toConfig(proc)
 	hostConfig := toHostConfig(proc)
 
@@ -75,10 +75,11 @@ func (e *engine) Exec(proc *backend.Step) error {
 	// automatically pull the latest version of the image if requested
 	// by the process configuration.
 	if proc.Pull {
-		rc, perr := e.client.ImagePull(ctx, config.Image, pullopts)
+		responseBody, perr := e.client.ImagePull(ctx, config.Image, pullopts)
 		if perr == nil {
-			io.Copy(ioutil.Discard, rc)
-			rc.Close()
+			defer responseBody.Close()
+			fd, isTerminal := term.GetFdInfo(os.Stdout)
+			jsonmessage.DisplayJSONMessagesStream(responseBody, os.Stdout, fd, isTerminal, nil)
 		}
 		// fix for drone/drone#1917
 		if perr != nil && proc.AuthConfig.Password != "" {
@@ -90,12 +91,13 @@ func (e *engine) Exec(proc *backend.Step) error {
 	if client.IsErrImageNotFound(err) {
 		// automatically pull and try to re-create the image if the
 		// failure is caused because the image does not exist.
-		rc, perr := e.client.ImagePull(ctx, config.Image, pullopts)
+		responseBody, perr := e.client.ImagePull(ctx, config.Image, pullopts)
 		if perr != nil {
 			return perr
 		}
-		io.Copy(ioutil.Discard, rc)
-		rc.Close()
+		defer responseBody.Close()
+		fd, isTerminal := term.GetFdInfo(os.Stdout)
+		jsonmessage.DisplayJSONMessagesStream(responseBody, os.Stdout, fd, isTerminal, nil)
 
 		_, err = e.client.ContainerCreate(ctx, config, hostConfig, nil, proc.Name)
 	}
@@ -126,12 +128,12 @@ func (e *engine) Exec(proc *backend.Step) error {
 	return e.client.ContainerStart(ctx, proc.Name, startOpts)
 }
 
-func (e *engine) Kill(proc *backend.Step) error {
+func (e *engine) Kill(_ context.Context, proc *backend.Step) error {
 	return e.client.ContainerKill(noContext, proc.Name, "9")
 }
 
-func (e *engine) Wait(proc *backend.Step) (*backend.State, error) {
-	_, err := e.client.ContainerWait(noContext, proc.Name)
+func (e *engine) Wait(ctx context.Context, proc *backend.Step) (*backend.State, error) {
+	_, err := e.client.ContainerWait(ctx, proc.Name)
 	if err != nil {
 		// todo
 	}
@@ -151,8 +153,8 @@ func (e *engine) Wait(proc *backend.Step) (*backend.State, error) {
 	}, nil
 }
 
-func (e *engine) Tail(proc *backend.Step) (io.ReadCloser, error) {
-	logs, err := e.client.ContainerLogs(noContext, proc.Name, logsOpts)
+func (e *engine) Tail(ctx context.Context, proc *backend.Step) (io.ReadCloser, error) {
+	logs, err := e.client.ContainerLogs(ctx, proc.Name, logsOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +169,7 @@ func (e *engine) Tail(proc *backend.Step) (io.ReadCloser, error) {
 	return rc, nil
 }
 
-func (e *engine) Destroy(conf *backend.Config) error {
+func (e *engine) Destroy(_ context.Context, conf *backend.Config) error {
 	for _, stage := range conf.Stages {
 		for _, step := range stage.Steps {
 			e.client.ContainerKill(noContext, step.Name, "9")
