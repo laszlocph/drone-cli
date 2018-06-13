@@ -11,10 +11,20 @@ https://github.com/drone/drone-cli/pull/86
 
 ## How install it?
 
+### Linux
+
 ```
 curl -LO https://github.com/laszlocph/drone-cli/releases/download/0.8.5-laszlo/drone-v0.8.5-laszlo-linux-amd64
 chmod +x ./drone-v0.8.5-laszlo-linux-amd64
 sudo mv ./drone-v0.8.5-laszlo-linux-amd64 /usr/local/bin/drone
+```
+
+### Mac
+
+```
+curl -LO https://github.com/laszlocph/drone-cli/releases/download/0.8.5-laszlo/drone-v0.8.5-laszlo-mac-amd64
+chmod +x ./drone-v0.8.5-laszlo-mac-amd64
+sudo mv ./drone-v0.8.5-laszlo-mac-amd64 /usr/local/bin/drone
 ```
 
 ## How to install from source?
